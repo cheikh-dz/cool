@@ -1,0 +1,185 @@
+
+<style>
+  .cool-btn {
+    background: transparent;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: 16px 48px;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    letter-spacing: 2px;
+    user-select: none;
+  }
+  .cool-btn:hover { background: var(--color-background-secondary); }
+  .cool-btn:active { transform: scale(0.96); }
+
+  .bar-track {
+    background: var(--color-background-secondary);
+    border-radius: 99px;
+    height: 22px;
+    width: 100%;
+    overflow: hidden;
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1), background 0.6s;
+    background: #378ADD;
+  }
+
+  .congrats-box {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 1.5rem;
+    background: var(--color-background-info);
+    border: 0.5px solid var(--color-border-info);
+    border-radius: var(--border-radius-lg);
+    animation: popIn 0.5s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .ice-particle {
+    position: absolute;
+    font-size: 18px;
+    pointer-events: none;
+    animation: floatUp 1.2s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-80px) scale(0.5); }
+  }
+
+  .btn-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .count-badge {
+    display: inline-block;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    min-width: 24px;
+    text-align: center;
+  }
+</style>
+
+<div style="padding: 2rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 1.75rem; max-width: 420px; margin: 0 auto;">
+
+  <p style="font-size: 15px; color: var(--color-text-secondary); margin: 0; text-align: center;">
+    كم أنت بارد؟ اضغط الزر لتعرف!
+  </p>
+
+  <div class="btn-wrap" id="btn-wrap">
+    <button class="cool-btn" id="cool-btn" onclick="handleCool()">برود ❄</button>
+  </div>
+
+  <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 13px; color: var(--color-text-secondary);">مستوى البرود</span>
+      <span class="count-badge" id="counter-label">0 / 100</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" id="bar" style="width: 0%;"></div>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+      <span style="font-size: 11px; color: var(--color-text-tertiary);">فاتر</span>
+      <span style="font-size: 11px; color: var(--color-text-tertiary);">أسطوري</span>
+    </div>
+  </div>
+
+  <div style="font-size: 13px; color: var(--color-text-secondary); min-height: 20px; text-align: center;" id="status-msg"></div>
+
+  <div class="congrats-box" id="congrats">
+    <div style="font-size: 32px;">🧊</div>
+    <p style="font-size: 17px; font-weight: 500; color: var(--color-text-info); margin: 0; text-align: center;">
+      تهانينا! لقد بلغت البرود الأسطوري
+    </p>
+    <p style="font-size: 14px; color: var(--color-text-info); margin: 0; text-align: center; opacity: 0.8;">
+      أنت الآن من أبرد الناس على وجه الأرض
+    </p>
+    <button style="margin-top: 4px; padding: 8px 24px; font-size: 13px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-info); background: transparent; color: var(--color-text-info); cursor: pointer;" onclick="resetGame()">
+      العب مجدداً
+    </button>
+  </div>
+
+</div>
+
+<script>
+  let count = 0;
+  const total = 100;
+  const particles = ['❄', '🧊', '💨', '⛄'];
+  const messages = [
+    [10,  'تبدأ تنبعث منك رياح باردة...'],
+    [25,  'الناس يرتدون جواكيت بسببك'],
+    [50,  'البارومتر انخفض 10 درجات'],
+    [75,  'الجو من حولك يتجمد!'],
+    [90,  'أقل خطوة وتصبح أسطورة!'],
+    [99,  'لحظة واحدة تفصلك عن التاريخ...'],
+  ];
+
+  function handleCool() {
+    if (count >= total) return;
+    count++;
+
+    const pct = (count / total) * 100;
+    const bar = document.getElementById('bar');
+    bar.style.width = pct + '%';
+
+    const r = Math.round(55 + (count / total) * 10);
+    const g = Math.round(138 - (count / total) * 80);
+    const b = Math.round(221 - (count / total) * 40);
+    bar.style.background = `rgb(${r},${g},${b})`;
+
+    document.getElementById('counter-label').textContent = count + ' / ' + total;
+
+    let msg = '';
+    for (const [threshold, text] of messages) {
+      if (count >= threshold) msg = text;
+    }
+    document.getElementById('status-msg').textContent = msg;
+
+    spawnParticle();
+
+    if (count >= total) {
+      setTimeout(showCongrats, 400);
+    }
+  }
+
+  function spawnParticle() {
+    const wrap = document.getElementById('btn-wrap');
+    const el = document.createElement('span');
+    el.className = 'ice-particle';
+    el.textContent = particles[Math.floor(Math.random() * particles.length)];
+    el.style.left = (20 + Math.random() * 60) + '%';
+    el.style.top = '0px';
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+  }
+
+  function showCongrats() {
+    document.getElementById('cool-btn').disabled = true;
+    document.getElementById('cool-btn').style.opacity = '0.4';
+    const box = document.getElementById('congrats');
+    box.style.display = 'flex';
+  }
+
+  function resetGame() {
+    count = 0;
+    document.getElementById('bar').style.width = '0%';
+    document.getElementById('bar').style.background = '#378ADD';
+    document.getElementById('counter-label').textContent = '0 / 100';
+    document.getElementById('status-msg').textContent = '';
+    document.getElementById('cool-btn').disabled = false;
+    document.getElementById('cool-btn').style.opacity = '1';
+    document.getElementById('congrats').style.display = 'none';
+  }
+</script>
