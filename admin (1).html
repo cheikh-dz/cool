@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم — برود</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 2rem;
+  }
+  .card {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .badge {
+    display: inline-block;
+    background: #633806;
+    color: #FAEEDA;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .counter {
+    text-align: center;
+    font-size: 52px;
+    font-weight: 800;
+    color: #378ADD;
+    letter-spacing: 4px;
+  }
+  .counter span { font-size: 18px; color: #555; font-weight: 400; }
+  .bar-track {
+    background: #0d0d1a;
+    border-radius: 99px;
+    height: 18px;
+    overflow: hidden;
+    border: 1px solid #0f3460;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #378ADD;
+    width: 0%;
+    transition: width 0.4s ease, background 0.5s;
+  }
+  .cool-btn {
+    background: #0f3460;
+    border: 1px solid #378ADD;
+    border-radius: 12px;
+    padding: 18px 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #85B7EB;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    letter-spacing: 2px;
+    width: 100%;
+  }
+  .cool-btn:hover { background: #185FA5; color: #fff; }
+  .cool-btn:active { transform: scale(0.97); }
+  .cool-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+  .row { display: flex; justify-content: space-between; align-items: center; }
+  .stage-msg { color: #5DCAA5; font-size: 14px; }
+  .reset-btn {
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 7px 16px;
+    color: #666;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .reset-btn:hover { border-color: #666; color: #aaa; }
+  .setup-box {
+    background: #0d0d1a;
+    border: 1px solid #1a1a3e;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .setup-box label { font-size: 13px; color: #888; }
+  .setup-box input {
+    background: #111126;
+    border: 1px solid #222244;
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #ccc;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+    font-family: monospace;
+  }
+  .setup-box input:focus { border-color: #378ADD; }
+  .save-btn {
+    background: #0f3460;
+    border: 1px solid #378ADD;
+    border-radius: 8px;
+    padding: 10px 0;
+    color: #85B7EB;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: 600;
+  }
+  .save-btn:hover { background: #185FA5; color: #fff; }
+  .status-bar { font-size: 12px; color: #555; text-align: center; min-height: 16px; }
+  .status-bar.ok  { color: #1D9E75; }
+  .status-bar.err { color: #E24B4A; }
+  .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: #1D9E75;
+    animation: blink 1.4s infinite; vertical-align: middle; margin-left: 4px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+</style>
+</head>
+<body>
+
+<div class="setup-box" id="setup-box">
+  <label>🔑 إعداد لمرة واحدة</label>
+  <input id="inp-token" type="password" placeholder="GitHub Token  →  ghp_xxxxxxxxxxxx" />
+  <input id="inp-owner" type="text"     placeholder="اسم المستخدم" value="cheikh-dz" />
+  <input id="inp-repo"  type="text"     placeholder="اسم الـ repo"  value="cool" />
+  <button class="save-btn" onclick="saveConfig()">حفظ والبدء ←</button>
+  <div class="status-bar" id="setup-status"></div>
+</div>
+
+<div class="card" id="main-card" style="display:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <span class="badge">🔐 لوحة التحكم</span>
+    <span style="font-size:12px;color:#444;"><span class="dot"></span> نشط</span>
+  </div>
+  <div class="counter" id="counter">0 <span>/ 100</span></div>
+  <div class="bar-track"><div class="bar-fill" id="bar"></div></div>
+  <button class="cool-btn" id="btn" onclick="press()">❄ برود</button>
+  <div class="row">
+    <span class="stage-msg" id="stage-msg">اضغط لتبدأ</span>
+    <button class="reset-btn" onclick="resetGame()">↺ إعادة</button>
+  </div>
+  <div class="status-bar" id="status"></div>
+</div>
+
+<script>
+const STAGES = [
+  [1,  'الهواء بدأ يتحرك...'],
+  [15, 'رياح باردة في الجو'],
+  [30, 'الناس يرتدون معاطفهم'],
+  [50, 'درجة الحرارة انخفضت فجأة!'],
+  [70, 'كل شيء يتجمد من حولك!'],
+  [90, 'خطوة أخيرة نحو الأسطورة!'],
+  [99, 'لحظة واحدة تفصلك عن التاريخ...'],
+];
+
+let TOKEN = '', OWNER = '', REPO = '';
+let count = 0, fileSha = '', busy = false;
+
+function saveConfig() {
+  TOKEN = document.getElementById('inp-token').value.trim();
+  OWNER = document.getElementById('inp-owner').value.trim();
+  REPO  = document.getElementById('inp-repo').value.trim();
+  if (!TOKEN || !OWNER || !REPO) { setSetupStatus('يرجى ملء جميع الحقول', true); return; }
+  localStorage.setItem('gh_token', TOKEN);
+  localStorage.setItem('gh_owner', OWNER);
+  localStorage.setItem('gh_repo',  REPO);
+  setSetupStatus('جاري الاتصال...', false);
+  loadData(true);
+}
+
+function setSetupStatus(msg, err) {
+  const el = document.getElementById('setup-status');
+  el.textContent = msg;
+  el.className = 'status-bar ' + (err ? 'err' : 'ok');
+}
+
+function setStatus(msg, err) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status-bar ' + (err ? 'err' : 'ok');
+  if (!err) setTimeout(() => { el.textContent = ''; }, 2000);
+}
+
+async function loadData(init = false) {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/contents/data.json?t=${Date.now()}`,
+      { headers: { Authorization: `token ${TOKEN}` } }
+    );
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    fileSha = json.sha;
+    const data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+    count = data.count || 0;
+    render();
+    if (init) {
+      document.getElementById('setup-box').style.display = 'none';
+      document.getElementById('main-card').style.display = 'flex';
+    }
+  } catch (e) {
+    if (init) setSetupStatus('فشل الاتصال — تأكد من Token والـ repo', true);
+    else setStatus('خطأ في القراءة', true);
+  }
+}
+
+async function writeData(newCount) {
+  const content = btoa(JSON.stringify({ count: newCount, timestamp: Date.now() }, null, 2));
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/contents/data.json`,
+      {
+        method: 'PUT',
+        headers: { Authorization: `token ${TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `update count to ${newCount}`, content, sha: fileSha })
+      }
+    );
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    fileSha = json.content.sha;
+    count = newCount;
+    render();
+    setStatus('✓ تم الحفظ في data.json');
+  } catch (e) {
+    setStatus('خطأ في الحفظ', true);
+  } finally {
+    busy = false;
+    document.getElementById('btn').disabled = count >= 100;
+  }
+}
+
+function press() {
+  if (busy || count >= 100) return;
+  busy = true;
+  document.getElementById('btn').disabled = true;
+  setStatus('جاري التحديث...');
+  writeData(count + 1);
+}
+
+function resetGame() {
+  if (busy) return;
+  busy = true;
+  writeData(0);
+}
+
+function render() {
+  const pct = Math.min(count, 100);
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('counter').innerHTML = count + ' <span>/ 100</span>';
+  const g = Math.round(138 - (pct / 100) * 80);
+  document.getElementById('bar').style.background = `rgb(30,${g},200)`;
+  let msg = 'اضغط لتبدأ';
+  for (const [t, m] of STAGES) { if (pct >= t) msg = m; }
+  if (pct >= 100) { msg = '🧊 البرود الأسطوري!'; document.getElementById('btn').disabled = true; }
+  else if (!busy) document.getElementById('btn').disabled = false;
+  document.getElementById('stage-msg').textContent = msg;
+}
+
+TOKEN = localStorage.getItem('gh_token') || '';
+OWNER = localStorage.getItem('gh_owner') || 'cheikh-dz';
+REPO  = localStorage.getItem('gh_repo')  || 'cool';
+document.getElementById('inp-owner').value = OWNER;
+document.getElementById('inp-repo').value  = REPO;
+if (TOKEN) { document.getElementById('inp-token').value = TOKEN; loadData(true); }
+</script>
+</body>
+</html>
