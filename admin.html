@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم — برود</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem;
+  }
+  .card {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .badge {
+    display: inline-block;
+    background: #854F0B;
+    color: #FAEEDA;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #ccc;
+  }
+  .cool-btn {
+    background: #0f3460;
+    border: 1px solid #378ADD;
+    border-radius: 12px;
+    padding: 16px 40px;
+    font-size: 26px;
+    font-weight: 600;
+    color: #85B7EB;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    letter-spacing: 2px;
+    align-self: center;
+  }
+  .cool-btn:hover { background: #185FA5; color: #fff; }
+  .cool-btn:active { transform: scale(0.95); }
+  .cool-btn:disabled { opacity: 0.3; cursor: default; }
+  .counter {
+    text-align: center;
+    font-size: 42px;
+    font-weight: 700;
+    color: #378ADD;
+    letter-spacing: 4px;
+  }
+  .counter span { font-size: 18px; color: #666; }
+  .bar-track {
+    background: #0d0d1a;
+    border-radius: 99px;
+    height: 18px;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #0f3460;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #378ADD;
+    width: 0%;
+    transition: width 0.4s ease, background 0.5s;
+  }
+  .reset-btn {
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 8px 20px;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .reset-btn:hover { border-color: #888; color: #ccc; }
+  .link-hint {
+    font-size: 13px;
+    color: #555;
+    text-align: center;
+    background: #0d0d1a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid #1a1a3e;
+  }
+  .link-hint a {
+    color: #378ADD;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .link-hint a:hover { text-decoration: underline; }
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #666;
+  }
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #1D9E75;
+    animation: blink 1.4s infinite;
+    vertical-align: middle;
+    margin-left: 5px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span class="badge">🔐 لوحة التحكم</span>
+    <span style="font-size:12px; color:#555;"><span class="dot"></span> بث مباشر</span>
+  </div>
+
+  <h2>أنت تتحكم في برودة المستخدم</h2>
+
+  <div class="counter" id="counter">0 <span>/ 100</span></div>
+
+  <div class="bar-track">
+    <div class="bar-fill" id="bar"></div>
+  </div>
+
+  <button class="cool-btn" id="btn" onclick="press()">❄ برود</button>
+
+  <div class="status-row">
+    <span id="stage-msg">اضغط لتبدأ</span>
+    <button class="reset-btn" onclick="reset()">إعادة تعيين</button>
+  </div>
+</div>
+
+<div class="link-hint">
+  شارك هذا الرابط مع المستخدم ←
+  <br><br>
+  <a href="viewer.html" target="_blank">viewer.html</a>
+  <br><small style="color:#444; font-size:11px; margin-top:4px; display:block;">
+    يعمل على نفس الجهاز أو GitHub Pages
+  </small>
+</div>
+
+<script>
+  const stages = [
+    [1,  'الهواء بدأ يتحرك...'],
+    [15, 'رياح باردة في الجو'],
+    [30, 'الناس يرتدون معاطفهم'],
+    [50, 'درجة الحرارة انخفضت فجأة'],
+    [70, 'كل شيء يتجمد حولك!'],
+    [90, 'أقل خطوة وتصبح أسطورة!'],
+    [99, 'لحظة واحدة تفصلك عن التاريخ...'],
+  ];
+
+  let count = parseInt(localStorage.getItem('cool_count') || '0');
+  render();
+
+  function press() {
+    if (count >= 100) return;
+    count++;
+    localStorage.setItem('cool_count', count);
+    localStorage.setItem('cool_ts', Date.now());
+    render();
+  }
+
+  function reset() {
+    count = 0;
+    localStorage.setItem('cool_count', 0);
+    localStorage.setItem('cool_ts', Date.now());
+    render();
+  }
+
+  function render() {
+    const pct = count;
+    document.getElementById('bar').style.width = pct + '%';
+    document.getElementById('counter').innerHTML = count + ' <span>/ 100</span>';
+
+    const g = Math.round(138 - (count / 100) * 80);
+    document.getElementById('bar').style.background = `rgb(30,${g},200)`;
+
+    let msg = 'اضغط لتبدأ';
+    for (const [t, m] of stages) { if (count >= t) msg = m; }
+    document.getElementById('stage-msg').textContent = msg;
+
+    if (count >= 100) {
+      document.getElementById('btn').disabled = true;
+      document.getElementById('stage-msg').textContent = '🧊 وصل إلى البرود الأسطوري!';
+    } else {
+      document.getElementById('btn').disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
