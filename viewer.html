@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مستوى البرود</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0d0d1a;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem;
+  }
+  .title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #85B7EB;
+    letter-spacing: 4px;
+    text-align: center;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #444;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .bar-wrap {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .bar-track {
+    background: #111126;
+    border-radius: 99px;
+    height: 28px;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #1a1a3e;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #378ADD;
+    width: 0%;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1), background 0.5s;
+    position: relative;
+  }
+  .bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 4px; right: 8px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+  }
+  .bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #444;
+  }
+  .pct {
+    font-size: 56px;
+    font-weight: 800;
+    color: #378ADD;
+    text-align: center;
+    letter-spacing: 2px;
+    transition: color 0.5s;
+    line-height: 1;
+  }
+  .msg {
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+    min-height: 22px;
+    transition: opacity 0.4s;
+    letter-spacing: 0.5px;
+  }
+  .particles {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .flake {
+    position: absolute;
+    font-size: 18px;
+    animation: fall linear forwards;
+    opacity: 0.6;
+  }
+  @keyframes fall {
+    from { transform: translateY(-30px) rotate(0deg); opacity: 0.6; }
+    to   { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+  }
+  .congrats {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    background: #042C53;
+    border: 1px solid #185FA5;
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    max-width: 360px;
+    animation: popIn 0.6s ease;
+  }
+  @keyframes popIn {
+    from { opacity:0; transform: scale(0.85); }
+    to   { opacity:1; transform: scale(1); }
+  }
+  .congrats-icon { font-size: 48px; }
+  .congrats h2 { font-size: 22px; color: #85B7EB; font-weight: 700; }
+  .congrats p  { font-size: 14px; color: #5DCAA5; line-height: 1.6; }
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #1D9E75;
+    animation: blink 1.4s infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .live-badge {
+    font-size: 12px;
+    color: #444;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="live-badge"><span class="dot"></span> مباشر</div>
+
+<div class="title">❄ مستوى البرود</div>
+<div class="subtitle">تابع ارتفاع مستوى البرود لحظة بلحظة</div>
+
+<div class="pct" id="pct">0%</div>
+
+<div class="bar-wrap">
+  <div class="bar-track">
+    <div class="bar-fill" id="bar"></div>
+  </div>
+  <div class="bar-labels">
+    <span>فاتر</span>
+    <span>بارد</span>
+    <span>أسطوري</span>
+  </div>
+</div>
+
+<div class="msg" id="msg">في انتظار البرود...</div>
+
+<div class="congrats" id="congrats">
+  <div class="congrats-icon">🧊</div>
+  <h2>تهانينا!</h2>
+  <p>لقد بلغت مرتبة البرود الأسطوري<br>أنت الآن من أبرد الناس على وجه الأرض</p>
+</div>
+
+<script>
+  const stages = [
+    [1,  'شيء ما يتغيّر في الجو...'],
+    [15, 'الهواء بدأ يبرد من حولك'],
+    [30, 'الناس يرتدون معاطفهم'],
+    [50, 'درجة الحرارة انخفضت فجأة!'],
+    [70, 'كل شيء يتجمد من حولك!'],
+    [90, 'خطوة أخيرة نحو الأسطورة...'],
+    [99, 'لحظة واحدة تفصلك عن التاريخ...'],
+  ];
+
+  let prev = 0;
+  let flakeInterval = null;
+
+  function update() {
+    const count = parseInt(localStorage.getItem('cool_count') || '0');
+    const pct = Math.min(count, 100);
+
+    document.getElementById('bar').style.width = pct + '%';
+    document.getElementById('pct').textContent = pct + '%';
+
+    const g = Math.round(138 - (pct / 100) * 80);
+    const barColor = `rgb(30,${g},200)`;
+    document.getElementById('bar').style.background = barColor;
+    document.getElementById('pct').style.color = barColor;
+
+    let msg = 'في انتظار البرود...';
+    for (const [t, m] of stages) { if (pct >= t) msg = m; }
+    const el = document.getElementById('msg');
+    if (el.textContent !== msg) {
+      el.style.opacity = '0';
+      setTimeout(() => { el.textContent = msg; el.style.opacity = '1'; }, 300);
+    }
+
+    if (pct > prev && pct < 100) spawnFlake();
+    prev = pct;
+
+    if (pct >= 100) {
+      document.getElementById('congrats').style.display = 'flex';
+      document.getElementById('msg').style.display = 'none';
+      startSnow();
+    } else {
+      document.getElementById('congrats').style.display = 'none';
+      document.getElementById('msg').style.display = 'block';
+      stopSnow();
+    }
+  }
+
+  function spawnFlake() {
+    const p = document.getElementById('particles');
+    const el = document.createElement('span');
+    el.className = 'flake';
+    el.textContent = ['❄','🧊','❅','❆'][Math.floor(Math.random() * 4)];
+    el.style.left = (Math.random() * 95) + '%';
+    el.style.animationDuration = (2 + Math.random() * 2) + 's';
+    p.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  function startSnow() {
+    if (flakeInterval) return;
+    flakeInterval = setInterval(spawnFlake, 200);
+  }
+
+  function stopSnow() {
+    if (flakeInterval) { clearInterval(flakeInterval); flakeInterval = null; }
+  }
+
+  update();
+  setInterval(update, 500);
+</script>
+</body>
+</html>
